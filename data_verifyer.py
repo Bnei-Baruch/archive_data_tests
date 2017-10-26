@@ -7,7 +7,7 @@ import requests
 
 BACKEND_ENDPOINT = "https://archive.kbb1.com/backend/content_units"
 CONTENT_UNIT_URL = "https://archive.kbb1.com/en/programs/full/"
-PAGE_SIZE = 100
+PAGE_SIZE = 1000
 
 
 def get_total():
@@ -15,7 +15,7 @@ def get_total():
     return r.json()['total']
 
 
-def fetch_content_unts(page_no=10, page_size=PAGE_SIZE):
+def fetch_content_unts(page_no=1, page_size=PAGE_SIZE):
     r = requests.get(BACKEND_ENDPOINT, params={'page_no': str(page_no), 'page_size': str(page_size), "language": 'en'})
     return r.json()['content_units']
 
@@ -39,12 +39,11 @@ def fetch_content_unit_files_data(cu_id, lang="en"):
 def run_content_units_test():
     total_pages = get_total() // PAGE_SIZE
 
-    for page in range(total_pages):
-        # TODO
-        cu_ids = fetch_cu_ids(fetch_content_unts(100))
+    for page in range(1, total_pages):
+        print("--------------- PAGE: {} -----------------".format(page))
+        cu_ids = fetch_cu_ids(fetch_content_unts(page, PAGE_SIZE))
         for cu_id in cu_ids:
             files_data = fetch_content_unit_files_data(cu_id)
-            print("--------------- PAGE: {} --------------".format(page))
             for file in files_data:
                 print("File: {}".format(file['name']))
 
