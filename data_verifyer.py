@@ -105,7 +105,7 @@ def run_content_units_test(logger):
                         logger.error("Error accessing {} - status code: {}".format(file_url, status_code))
                     print("File: {} - URL: {} - Status code: {}".format(file['name'], file_url, status_code))
         except ConnectionResetError as cerr:
-            logger.error("{} on wile fetching page #{}".format(cerr.strerror, page))
+            logger.error("{} wile fetching page #{}".format(cerr.strerror, page))
             pass
 
 
