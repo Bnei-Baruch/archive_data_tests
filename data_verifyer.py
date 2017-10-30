@@ -8,8 +8,6 @@ import logging
 
 import sys
 
-from urllib3.exceptions import ProtocolError
-
 BACKEND_ENDPOINT = "https://archive.kbb1.com/backend/content_units"
 CDN_ENDPOINT = "https://cdn.kabbalahmedia.info/"
 CONTENT_UNIT_URL = "https://archive.kbb1.com/en/programs/full/"
@@ -27,6 +25,10 @@ def fetch_content_units(page_no=1, page_size=PAGE_SIZE):
 
 
 def fetch_cu_ids(content_units):
+    """
+    :param content_units: dict
+    :return: list
+    """
     cu_ids = []
     if not content_units:
         raise ValueError("content_units are empty")
@@ -36,23 +38,44 @@ def fetch_cu_ids(content_units):
 
 
 def fetch_content_unit_files_data(cu_id, lang="en"):
+    """
+
+    :param cu_id: str
+    :param lang: str
+    :return: int, list
+    """
     if not cu_id:
         raise ValueError("Emtpy content unit ID")
     r = requests.get(BACKEND_ENDPOINT + "/" + cu_id, params={"language": lang})
-    return r.status_code, r.json()['files']
+    try:
+        files_data = r.json()['files']
+    except KeyError:
+        raise KeyError("Bad JOSN from collection {} - {}".format(cu_id, r.json()))
+    return r.status_code, files_data
 
 
 def check_cdn_file_url(file_id):
+    """
+
+    :param file_id: str
+    :return: int, str
+    """
     # first we need to get the real url to file we're redirected to
     file_url = CDN_ENDPOINT + file_id
     r = requests.get(file_url, allow_redirects=False)
     # getting real url and just trying to access without downloading it
     file_url = r.headers['location']
-    r = requests.get(file_url, stream=True)
+    with requests.get(file_url, stream=True) as r:
+        pass
     return r.status_code, file_url
 
 
 def test_fetch_all_content_units(logger):
+    """
+
+    :param logger: logging
+    :return: list
+    """
     total_pages = get_total() // PAGE_SIZE
     cu_ids = []
 
@@ -68,6 +91,12 @@ def test_fetch_all_content_units(logger):
 
 
 def test_fetch_content_units_file_data(logger, cu_ids):
+    """
+
+    :param logger: logging
+    :param cu_ids: list
+    :return: list
+    """
     file_guids = []
     for cu_id in cu_ids:
         try:
@@ -82,10 +111,18 @@ def test_fetch_content_units_file_data(logger, cu_ids):
             logger.error("{} while fetching content unit {}".format(cerr, BACKEND_ENDPOINT + "/" +
                                                                     cu_id))
             continue
+        except KeyError as key_err:
+            logger.error(key_err)
+            continue
     return file_guids
 
 
-def run_content_units_test(logger):
+def test_fetch_all_media_files(logger):
+    """
+
+    :param logger: logging
+    :return:
+    """
     total_pages = get_total() // PAGE_SIZE
 
     for page in range(1, total_pages):
@@ -120,9 +157,9 @@ def main():
     tests = {
         "fetch_countent_units": fetch_content_units()
     }
-    run_content_units_test(logger)
     #cu_ids = test_fetch_all_content_units(logger)
     #test_fetch_content_units_file_data(logger, cu_ids)
+    test_fetch_all_media_files(logger)
 
 
 if __name__ == "__main__":
