@@ -130,17 +130,19 @@ def test_fetch_all_media_files(logger):
         try:
             cu_ids = fetch_cu_ids(fetch_content_units(page, PAGE_SIZE))
             for cu_id in cu_ids:
+                file = None
                 try:
                     _, files_data = fetch_content_unit_files_data(cu_id)
-                except ConnectionResetError as cerr:
-                    logger.error("{} while fetching content unit {}".format(cerr.strerror, BACKEND_ENDPOINT + "/" +
-                                                                            cu_id))
-                    continue
-                for file in files_data:
-                    status_code, file_url = check_cdn_file_url(file['id'])
-                    if status_code != 200:
-                        logger.error("Error accessing {} - status code: {}".format(file_url, status_code))
-                    print("File: {} - URL: {} - Status code: {}".format(file['name'], file_url, status_code))
+                    for file in files_data:
+                        status_code, file_url = check_cdn_file_url(file['id'])
+                        if status_code != 200:
+                            logger.error("Error accessing {} - status code: {}".format(file_url, status_code))
+                        print("File: {} - URL: {} - Status code: {}".format(file['name'], file_url, status_code))
+                except (ConnectionResetError, KeyError) as cerr:
+                    logger.error("{} while fetching content unit {} -> file {}".format(cerr.strerror,
+                                                                                       BACKEND_ENDPOINT + "/" + cu_id,
+                                                                                       file))
+                continue
         except ConnectionResetError as cerr:
             logger.error("{} wile fetching page #{}".format(cerr.strerror, page))
             pass
@@ -157,8 +159,8 @@ def main():
     tests = {
         "fetch_countent_units": fetch_content_units()
     }
-    #cu_ids = test_fetch_all_content_units(logger)
-    #test_fetch_content_units_file_data(logger, cu_ids)
+    # cu_ids = test_fetch_all_content_units(logger)
+    # test_fetch_content_units_file_data(logger, cu_ids)
     test_fetch_all_media_files(logger)
 
 
