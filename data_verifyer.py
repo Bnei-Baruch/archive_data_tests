@@ -50,7 +50,12 @@ def fetch_content_unit_files_data(cu_id, lang="en"):
     try:
         files_data = r.json()['files']
     except KeyError:
-        raise KeyError("Bad JOSN from collection {} - {}".format(cu_id, r.json()))
+        # we'll check if files list is "wrapped" by source_units
+        the_key = list(r.json()['source_units'].keys())[0]
+        try:
+            files_data = r.json()['source_units'][the_key]['files']
+        except KeyError:
+            raise KeyError("Bad JOSN from collection {} - {}".format(cu_id, r.json()))
     return r.status_code, files_data
 
 
@@ -139,7 +144,7 @@ def test_fetch_all_media_files(logger):
                             logger.error("Error accessing {} - status code: {}".format(file_url, status_code))
                         print("File: {} - URL: {} - Status code: {}".format(file['name'], file_url, status_code))
                 except (ConnectionResetError, KeyError) as cerr:
-                    logger.error("{} while fetching content unit {} -> file {}".format(cerr.strerror,
+                    logger.error("{} while fetching content unit {} -> file {}".format(cerr,
                                                                                        BACKEND_ENDPOINT + "/" + cu_id,
                                                                                        file))
                 continue
@@ -159,8 +164,8 @@ def main():
     tests = {
         "fetch_countent_units": fetch_content_units()
     }
-    # cu_ids = test_fetch_all_content_units(logger)
-    # test_fetch_content_units_file_data(logger, cu_ids)
+    cu_ids = test_fetch_all_content_units(logger)
+    test_fetch_content_units_file_data(logger, cu_ids)
     test_fetch_all_media_files(logger)
 
 
