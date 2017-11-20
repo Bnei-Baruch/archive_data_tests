@@ -38,7 +38,11 @@ def fetch_all_content_units(logger, cuid_queue):
     :param cuid_queue: queue
     :param logger: logging
     """
-    total_pages = get_total() // PAGE_SIZE
+    total_items = get_total()
+    total_pages = total_items // PAGE_SIZE
+
+    logger.info("{} items found. Going to process {} pages {} elements per page".format(total_items, total_pages,
+                                                                                        PAGE_SIZE))
 
     for page in range(1, total_pages):
         print("--------------- PAGE: {} -----------------".format(page))
